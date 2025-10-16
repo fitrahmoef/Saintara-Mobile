@@ -1,0 +1,323 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN_INSTANSI
+  CUSTOMER
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_VERIFICATION
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum BloodType {
+  A
+  B
+  AB
+  O
+}
+
+enum InstansiType {
+  ORGANIZATION
+  SCHOOL
+}
+
+enum TestOrderType {
+  PERSONAL
+  INSTANSI
+  SEKOLAH
+  SOSIAL_GIFT
+}
+
+enum PackageType {
+  LAPORAN_UMUM_10
+  LAPORAN_LENGKAP_PENEMPATAN_25
+  LAPORAN_LENGKAP_KARIR_25
+  LENGKAP_35_KARAKTER
+  PELATIHAN_ONLINE
+  PELATIHAN_TATAP_MUKA
+}
+
+enum TestOrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PROCESSING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum CharacterType {
+  PEMIKIR_INTROVERT
+  PEMIKIR_EXTROVERT
+  PENGAMAT_INTROVERT
+  PENGAMAT_EXTROVERT
+  PERASA_INTROVERT
+  PERASA_EXTROVERT
+  PEMIMPI_INTROVERT
+  PEMIMPI_EXTROVERT
+  PENGGERAK
+}
+
+model User {
+  id              String      @id @default(uuid())
+  email           String      @unique
+  username        String?     @unique
+  password        String
+  fullName        String
+  nickName        String?
+  phone           String?
+  avatar          String?
+  dateOfBirth     DateTime?
+  gender          Gender?
+  bloodType       BloodType?
+  country         String?
+  city            String?
+  role            Role        @default(CUSTOMER)
+  status          UserStatus  @default(PENDING_VERIFICATION)
+  emailVerified   Boolean     @default(false)
+  emailVerifiedAt DateTime?
+
+  // TAMBAHKAN FIELDS INI:
+  verificationToken    String?
+  verificationExpires  DateTime?
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  
+  instansiId      String?
+  instansi        Instansi?   @relation("InstansiMembers", fields: [instansiId], references: [id])
+  
+  ownedInstansi   Instansi[]  @relation("InstansiOwner")
+  testOrders      TestOrder[]
+  testResults     TestResult[]
+  certificates    Certificate[]
+  donations       Donation[]  @relation("Donatur")
+  receivedGifts   Donation[]  @relation("Penerima")
+  payments        Payment[]
+  notifications   Notification[]
+  activities      Activity[]
+  
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  lastLoginAt     DateTime?
+
+  @@index([email])
+  @@index([role])
+  @@map("users")
+}
+
+model Instansi {
+  id          String        @id @default(uuid())
+  name        String
+  code        String        @unique
+  type        InstansiType
+  email       String?
+  phone       String?
+  address     String?
+  country     String?
+  city        String?
+  logo        String?
+  isActive    Boolean       @default(true)
+  
+  ownerId     String
+  owner       User          @relation("InstansiOwner", fields: [ownerId], references: [id])
+  members     User[]        @relation("InstansiMembers")
+  testOrders  TestOrder[]
+  
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([code])
+  @@map("instansi")
+}
+
+model TestOrder {
+  id                String          @id @default(uuid())
+  orderNumber       String          @unique
+  type              TestOrderType
+  status            TestOrderStatus @default(PENDING_PAYMENT)
+  userId            String
+  user              User            @relation(fields: [userId], references: [id])
+  instansiId        String?
+  instansi          Instansi?       @relation(fields: [instansiId], references: [id])
+  packages          PackageType[]
+  totalParticipants Int             @default(1)
+  pricePerPerson    Decimal         @db.Decimal(10, 2)
+  totalAmount       Decimal         @db.Decimal(12, 2)
+  scheduledDate     DateTime?
+  notes             String?
+  excelFile         String?
+  testParticipants  TestParticipant[]
+  payment           Payment?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([orderNumber])
+  @@index([userId])
+  @@map("test_orders")
+}
+
+model TestParticipant {
+  id            String      @id @default(uuid())
+  testOrderId   String
+  testOrder     TestOrder   @relation(fields: [testOrderId], references: [id], onDelete: Cascade)
+  fullName      String
+  nickName      String?
+  email         String
+  dateOfBirth   DateTime
+  gender        Gender
+  bloodType     BloodType?
+  studentNumber String?
+  className     String?
+  testResult    TestResult?
+  createdAt     DateTime    @default(now())
+
+  @@index([testOrderId])
+  @@map("test_participants")
+}
+
+model TestResult {
+  id              String          @id @default(uuid())
+  resultNumber    String          @unique
+  participantId   String          @unique
+  participant     TestParticipant @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  userId          String?
+  user            User?           @relation(fields: [userId], references: [id])
+  characterType   CharacterType
+  brainSystem     String
+  expression      String
+  characterColor  String
+  keywords        String[]
+  characteristics Json
+  pdfUrl          String?
+  emailSent       Boolean         @default(false)
+  certificate     Certificate?
+  createdAt       DateTime        @default(now())
+
+  @@index([resultNumber])
+  @@map("test_results")
+}
+
+model Certificate {
+  id                String     @id @default(uuid())
+  certificateNumber String     @unique
+  testResultId      String     @unique
+  testResult        TestResult @relation(fields: [testResultId], references: [id], onDelete: Cascade)
+  userId            String
+  user              User       @relation(fields: [userId], references: [id])
+  title             String
+  issueDate         DateTime   @default(now())
+  hasSignature      Boolean    @default(false)
+  qrCode            String?
+  certificateUrl    String?
+  isValid           Boolean    @default(true)
+  createdAt         DateTime   @default(now())
+
+  @@index([certificateNumber])
+  @@map("certificates")
+}
+
+model Donation {
+  id              String        @id @default(uuid())
+  donationNumber  String        @unique
+  donaturId       String
+  donatur         User          @relation("Donatur", fields: [donaturId], references: [id])
+  recipientId     String?
+  recipient       User?         @relation("Penerima", fields: [recipientId], references: [id])
+  recipientName   String?
+  recipientEmail  String?
+  quantity        Int           @default(1)
+  totalAmount     Decimal       @db.Decimal(12, 2)
+  package         PackageType
+  isProcessed     Boolean       @default(false)
+  payment         Payment?
+  createdAt       DateTime      @default(now())
+
+  @@index([donationNumber])
+  @@map("donations")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  paymentNumber String        @unique
+  userId        String
+  user          User          @relation(fields: [userId], references: [id])
+  amount        Decimal       @db.Decimal(12, 2)
+  status        PaymentStatus @default(PENDING)
+  method        String?
+  testOrderId   String?       @unique
+  testOrder     TestOrder?    @relation(fields: [testOrderId], references: [id])
+  donationId    String?       @unique
+  donation      Donation?     @relation(fields: [donationId], references: [id])
+  transactionId String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+
+  @@index([paymentNumber])
+  @@index([userId])
+  @@map("payments")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+model Activity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String
+  description String
+  metadata    Json?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("activities")
+}
+
+model Settings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  description String?
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@map("settings")
+}

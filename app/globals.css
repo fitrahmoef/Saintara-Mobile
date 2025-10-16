@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: "Inter", sans-serif;
+}
+
+.font-poppins {
+  font-family: "Poppins", sans-serif;
+}
+
+.bg-sintara-blue {
+  background-color: #0d1b2a;
+}
+.text-sintara-blue {
+  color: #0d1b2a;
+}
+.border-sintara-blue {
+  border-color: #0d1b2a;
+}
+
+.bg-sintara-gold {
+  background-color: #f8c44b;
+}
+.text-sintara-gold {
+  color: #f8c44b;
+}
+.border-sintara-gold {
+  border-color: #f8c44b;
+}
+
+.bg-sintara-darkgold {
+  background-color: #a87c2d;
+}
+.text-sintara-darkgold {
+  color: #a87c2d;
+}
+.border-sintara-darkgold {
+  border-color: #a87c2d;
+}
+
+.hero-gradient {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, #ffffff 100%);
+}
+.cta-gradient {
+  background: linear-gradient(45deg, #0d1b2a 0%, #1b263b 100%);
+}
