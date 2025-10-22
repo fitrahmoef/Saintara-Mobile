@@ -19,7 +19,7 @@ interface TestOrder {
     paidAt?: string;
   };
   _count: {
-    participants: number;
+    testParticipants: number;
   };
 }
 
@@ -207,7 +207,7 @@ export default function TestOrdersPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Participants</p>
-                    <p className="font-semibold text-gray-800">{order._count.participants}</p>
+                    <p className="font-semibold text-gray-800">{order._count.testParticipants}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Amount</p>

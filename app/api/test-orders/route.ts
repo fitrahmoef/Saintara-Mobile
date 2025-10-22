@@ -47,17 +47,16 @@ export async function GET(request: NextRequest) {
               paidAt: true,
             }
           },
-          participants: {
+          testParticipants: {
             select: {
               id: true,
-              name: true,
+              fullName: true,
               email: true,
-              status: true,
             }
           },
           _count: {
             select: {
-              participants: true,
+              testParticipants: true,
             }
           }
         }

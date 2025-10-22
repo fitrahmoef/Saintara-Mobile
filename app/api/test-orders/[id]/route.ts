@@ -31,9 +31,9 @@ export async function GET(
           }
         },
         payment: true,
-        participants: {
+        testParticipants: {
           include: {
-            testResults: {
+            testResult: {
               include: {
                 certificate: true,
               }
