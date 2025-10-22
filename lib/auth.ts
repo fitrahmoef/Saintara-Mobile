@@ -51,3 +51,11 @@ export async function hashPassword(password: string): Promise<string> {
 export async function comparePassword(password: string, hash: string): Promise<boolean> {
   return await bcryptjs.compare(password, hash);
 }
+
+export async function getUserFromRequest(request: NextRequest): Promise<JWTPayload | null> {
+  const token = getTokenFromRequest(request);
+  if (!token) {
+    return null;
+  }
+  return await verifyToken(token);
+}
